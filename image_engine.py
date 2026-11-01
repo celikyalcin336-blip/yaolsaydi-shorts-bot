@@ -3,9 +3,23 @@ import re
 import time
 import urllib.parse
 import requests
+from PIL import Image
+
+def strip_watermark(image_path: str):
+    """Görselin altındaki üçüncü parti logo/filigran bölgesini (alt 85px) tamamen keser."""
+    try:
+        with Image.open(image_path) as img:
+            w, h = img.size
+            if h > 200:
+                # Alttaki 85 piksellik filigran alanını sıfıra indir
+                clean_img = img.crop((0, 0, w, h - 85))
+                clean_img.save(image_path, quality=95)
+                print(f"🧹 Filigran yok edildi: {image_path} (Yeni: {clean_img.size})")
+    except Exception as e:
+        print("Filigran temizleme uyarısı:", e)
 
 def generate_image_pollinations(prompt: str, output_path: str, max_attempts: int = 8) -> bool:
-    """Pollinations AI üzerinden 9:16 görsel üretir. 402 veya 503 durumlarında dinamik bekler."""
+    """Pollinations AI üzerinden 9:16 görsel üretir ve logoyu anında yok eder."""
     if os.path.exists(output_path) and os.path.getsize(output_path) > 10000:
         print(f"Görsel zaten mevcut, atlanıyor: {output_path}")
         return True
@@ -27,7 +41,9 @@ def generate_image_pollinations(prompt: str, output_path: str, max_attempts: int
             if resp.status_code == 200 and len(resp.content) > 10000:
                 with open(output_path, "wb") as f:
                     f.write(resp.content)
-                print(f"Görsel başarıyla kaydedildi: {output_path} ({len(resp.content)/1024:.1f} KB)")
+                # İner inmez logoyu kes ve temizle!
+                strip_watermark(output_path)
+                print(f"Görsel başarıyla kaydedildi ve temizlendi: {output_path} ({len(resp.content)/1024:.1f} KB)")
                 return True
                 
             elif resp.status_code == 402:
@@ -51,7 +67,7 @@ def generate_image_pollinations(prompt: str, output_path: str, max_attempts: int
     return False
 
 def generate_all_scenes(scene_prompts: list, output_dir: str) -> list:
-    """Tüm 4 sahnenin görsellerini üretir. Başarısızlık durumunda akıllı telafi yapar."""
+    """Tüm 4 sahnenin görsellerini üretir ve temizler."""
     os.makedirs(output_dir, exist_ok=True)
     paths = []
     
@@ -71,7 +87,6 @@ def generate_all_scenes(scene_prompts: list, output_dir: str) -> list:
             else:
                 return []
                 
-        # Eğer görsel yeni indirildiyse ve son sahne değilse bekleme yap
         if not already_cached and idx < len(scene_prompts):
             print("Sonraki sahne için API soğutma beklemesi (46s)...")
             time.sleep(46)

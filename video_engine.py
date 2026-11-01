@@ -24,12 +24,12 @@ def build_video_short(
     """
     4 sahne görselini ses ve güvenli altyazıyla birleştirip 1080x1920 Full HD video üretir.
     Altyazılar mobilde asla ekrandan taşmayacak şekilde sağ-sol 90px marjla yerleştirilir.
+    Görsellerdeki tüm alt kenar kalıntıları kırpılarak sıfır logo garantilenir.
     """
     ffmpeg_exe = get_ffmpeg_path()
     output_dir = os.path.dirname(os.path.abspath(output_video_path))
     os.makedirs(output_dir, exist_ok=True)
     
-    # subtitles.srt'nin olduğu klasörde çalıştırıyoruz ki FFmpeg doğrudan bulsun
     work_dir = os.path.dirname(os.path.abspath(subtitles_path))
     
     durations = [5.8, 5.6, 4.8, 5.3]
@@ -46,21 +46,23 @@ def build_video_short(
         
     srt_name = os.path.basename(subtitles_path)
     
-    # Subtitle styling:
-    # MarginL=90, MarginR=90 (Sağdan ve soldan 90 piksel güvenlik marjı - ASLA TAŞMAZ!)
-    # MarginV=150 (Alttan 150 piksel yukarıda, Shorts UI butonlarının üstünde)
-    # Fontsize=18, Bold=1, Sarı metin, Kalın siyah kontur
     sub_style = (
         "force_style='Fontname=Arial,Fontsize=18,Bold=1,"
         "PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,"
         "Outline=2.5,Shadow=1,Alignment=2,MarginV=150,MarginL=90,MarginR=90'"
     )
     
-    # Filtre zinciri
+    # Scale ve crop zinciri: Alt kenardaki her türlü filigranı %100 yok eden güvenli kırpma
+    video_filter = (
+        f"[0:v]crop=in_w:in_h-30:0:0,"
+        f"scale=1080:1920:force_original_aspect_ratio=increase,"
+        f"crop=1080:1920,fps=30,"
+        f"subtitles={srt_name}:{sub_style}[v]"
+    )
+    
     if music_path and os.path.exists(music_path):
         filter_complex = (
-            f"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
-            f"subtitles={srt_name}:{sub_style}[v];"
+            f"{video_filter};"
             f"[1:a]volume=1.0[voice];"
             f"[2:a]volume=0.18,aloop=loop=-1:size=2e+09[bgm];"
             f"[voice][bgm]amix=inputs=2:duration=first[a]"
@@ -72,8 +74,7 @@ def build_video_short(
         ]
     else:
         filter_complex = (
-            f"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
-            f"subtitles={srt_name}:{sub_style}[v];"
+            f"{video_filter};"
             f"[1:a]volume=1.0[a]"
         )
         inputs = [
