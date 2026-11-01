@@ -1,0 +1,8 @@
+output/
+temp_build/
+__pycache__/
+*.pyc
+test_*.jpg
+test_*.mp3
+test_*.srt
+concat_temp.txt

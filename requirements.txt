@@ -1,0 +1,4 @@
+requests
+pillow
+edge-tts
+imageio-ffmpeg
