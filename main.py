@@ -54,7 +54,7 @@ def run_pipeline():
     
     # 2. Ses ve Altyazı Üretimi
     voice_path = os.path.join(TEMP_DIR, "voice.mp3")
-    subtitles_path = os.path.join(TEMP_DIR, "subtitles.srt")
+    subtitles_path = os.path.join(TEMP_DIR, "subtitles.ass")
     print("🎙️ Seslendirme ve Güvenli Altyazı üretiliyor...")
     duration = audio_engine.generate_audio(scenario["script"], voice_path, subtitles_path)
     print(f"⏱️ Ses Süresi: {duration:.2f} saniye")

@@ -24,10 +24,13 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: FFmpeg Kur
+      - name: FFmpeg ve Fontları Kur
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
+          sudo apt-get install -y -qq ffmpeg fonts-montserrat
+          mkdir -p ~/.local/share/fonts
+          cp assets/fonts/*.ttf ~/.local/share/fonts/ 2>/dev/null || true
+          fc-cache -f -v
 
       - name: Bağımlılıkları Yükle
         run: |

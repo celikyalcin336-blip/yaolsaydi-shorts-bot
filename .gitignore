@@ -2,7 +2,13 @@ output/
 temp_build/
 __pycache__/
 *.pyc
-test_*.jpg
-test_*.mp3
-test_*.srt
-concat_temp.txt
+*.mp4
+*.ass
+*.srt
+*.mp3
+*.jpg
+*.jpeg
+*.png
+concat_*.txt
+test_*.py
+send_clean.py
