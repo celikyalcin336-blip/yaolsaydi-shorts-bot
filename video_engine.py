@@ -89,7 +89,7 @@ def build_video_short(
 ) -> bool:
     """
     4 sahne görselini Ken Burns kamera dinamizmi, pürüzsüz geçişler, stüdyo ses miksajı
-    ve Montserrat fontlu modern viral altyazıyla 1080x1920 Full HD sinematik videoya dönüştürür.
+    ve Montserrat fontlu modern viral altyazıyla 1080x1920 Full HD yüksek bitrate videoya dönüştürür.
     """
     ffmpeg_exe = get_ffmpeg_path()
     work_dir = os.path.dirname(os.path.abspath(subtitles_path))
@@ -101,8 +101,6 @@ def build_video_short(
     
     num_scenes = len(image_paths)
     if num_scenes == 4:
-        # Shorts ritmine göre optimize süre dağılımı
-        # Sahne 1 (Kanca): 5.5s, Sahne 2 (Gelişme): 5.5s, Sahne 3 (Kaos): 5.0s, Sahne 4 (Doruk): 5.5s
         base_durations = [5.5, 5.5, 5.0, 5.5]
         factor = total_duration / sum(base_durations)
         durations = [d * factor for d in base_durations]
@@ -155,8 +153,6 @@ def build_video_short(
     video_filter = f"[0:v]subtitles={ass_rel_path}{fonts_filter_arg}[v]"
 
     # Stüdyo kalitesinde ses işleme:
-    # 1. Seslendirme kompresörle güçlendirilir (tüm kelimeler net ve yüksek çıkar)
-    # 2. Arka plan gerilim müziği sesin altına gömülür (ducking), looplanır ve yumuşak fade-in/out yapılır
     if music_path and os.path.exists(music_path):
         fade_out_music_st = max(1.0, total_duration - 1.5)
         filter_complex = (
@@ -188,7 +184,12 @@ def build_video_short(
         "-map", "[a]",
         "-c:v", "libx264",
         "-preset", "fast",
-        "-crf", "19",
+        "-crf", "18",
+        "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
+        "-b:v", "8M",
+        "-maxrate", "12M",
+        "-bufsize", "16M",
         "-c:a", "aac",
         "-b:a", "192k",
         "-shortest",
